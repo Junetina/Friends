@@ -7,9 +7,9 @@
 									@doComment='doComment' 
 									@followEvent='followEvent'
 									@doSupport='doSupport'>
-				<view>{{info.content}}</view>
+				<view class='font-sm'>{{info.content}}</view>
 				<view>
-					<image v-for='(item,index) in info.images'
+					<image v-for='(item,index) in images'
 								class='w-100'
 								mode='widthFix'
 								:key='index' 
@@ -20,22 +20,26 @@
 			
 			<divider></divider>
 			<view class='px-2'>
-				<view class='font-lg text-dark font-weight-bold  py-2'>最新评论 3</view>
+				<view class='font-lg text-dark font-weight-bold  py-2'>最新评论 {{info.comment_count}}</view>
+				<block v-for='(item2,index2) in commentList' :key='index2'>
 					<view class="uni-comment-list font-md">
-					    <view class="uni-comment-face">
-					        <image src="https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/uni@2x.png" mode="widthFix"></image>
-					    </view>
-					    <view class="uni-comment-body">
-					        <view class="uni-comment-top">
-					            <text>小猫咪</text>
-					        </view>
-					        <view class="uni-comment-content">支持国产，支持DCloud!</view>
-					        <view class="uni-comment-date">
-					            <view>2天前</view>
-					       	</view>
+						    <view class="uni-comment-face">
+									<!-- https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/uni@2x.png -->
+						        <image :src="item2.user.userpic | defaultUserPic" mode="widthFix"></image>
+						    </view>
+						    <view class="uni-comment-body">
+						        <view class="uni-comment-top">
+						            <text>{{item2.user.username}}</text>
+						        </view>
+						        <view class="uni-comment-content">{{item2.data}}</view>
+						        <view class="uni-comment-date">
+						            <view>2天前</view>
+						       	</view>
+						
+								</view>
+					</view>
+				</block>
 					
-							</view>
-				</view>
 				
 			</view>
 			
@@ -61,42 +65,48 @@
 		data(){
 			return {
 				info:{
-					username:'昵称',
-					userpic:'/static/default.jpg',
-					newstime:'2019-07-01 下午4:22',
+					id:0,
+					user_id:0,
+					username:'',
+					userpic:'',
+					newstime:0,
 					isFollow:false,
 					title:'测试封面图',
-					content:'uni-app是一个使用vue.js开发跨平台应用的前端框架',
-					images:[
-						{
-						url:"https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/4.jpg"
-						},
-						{
-						url:"https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/5.jpg"
-						}
-					],
-					titlepic:'../../static/bgimg/1.jpg',
+					content:'',
+					titlepic:'',
 					support:{
 						type:'unsupport',
-						support_count:1,
-						unsupport_count:2
+						support_count:0,
+						unsupport_count:0
 					},
-					comment_count:2,
-					share_num:2
+					comment_count:0,
+					share_num:0
 				},
-				
-				
+				images:[
+					{
+					url:"https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/4.jpg"
+					},
+					{
+					url:"https://tangzhe123-com.oss-cn-shenzhen.aliyuncs.com/Appstatic/qsbk/demo/datapic/5.jpg"
+					}
+				],
+				//评论列表
+				commentList:[]
 			}
 		},
 		onLoad(e) {
-			// console.log(JSON.parse(e.detail))
 			//初始化数据，由点击首页的任意详情列表跳转过来，并携带一个详情列表的对象作为参数传过来
 			this.__init(JSON.parse(e.detail))
 			
 		},
 		computed:{
 			imageList(){
-				return this.info.images.map(item=>item.url)
+				return this.images.map(item=>item.url)
+			}
+		},
+		filters:{
+			defaultUserPic(value){
+				if(value === null) return 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/images/uni@2x.png'
 			}
 		},
 		methods:{
@@ -105,13 +115,28 @@
 				uni.setNavigationBarTitle({
 					title:data.title
 				})
-				//请求api
+				//将commonlist组件里面的item对象通过url传输过来并接收渲染部分数据
+				console.log(data)
+				this.info = data
+				let id = this.info.id
+				//获取文章详情
+				this.$H.get('/post/'+id)
+				.then(res=>{
+					console.log(res)
+					this.info.content = res.detail.content
+					this.images = res.detail.images
+				})//end .then
 				
+				// 获取文章评论列表
+				this.$H.get('/post/'+id+'/comment')
+				.then(res=>{
+					this.commentList = res.list
+				})//end .then
 			},
 			
 			//点击评论
 			doComment(){
-				
+				console.log('点击评论')
 			},
 			//监听导航栏更多按钮
 			onNavigationBarButtonTap(){
@@ -123,7 +148,7 @@
 			},
 			//点击分享
 			doShare(){
-				
+				console.log('点击分享')
 			},
 			//点击关注
 			followEvent(){

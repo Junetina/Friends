@@ -1,22 +1,36 @@
 <template>
 	<view class="content">
 		<!-- 顶部tab选项卡切换 -->
-		<scroll-view scroll-x style='height:100rpx;' :scroll-into-view='scrollInto' scroll-with-animation class='scroll-row border-bottom border-light-secondary font-md'>
+		<scroll-view scroll-x style='height:100rpx;' 
+								:scroll-into-view='scrollInto' 
+								scroll-with-animation class='scroll-row border-bottom border-light-secondary font-md'>
 			<block v-for='(item,index) in tabLi'>
-				<view :key='index' :id='"tab"+index' @click="changeTab(index)" :class='tabIndex==index?"text-main font-lg font-weight-bold":""'
-				 class='scroll-row-item py-3 px-3'>{{item.classname}}</view>
+				<view :key='index' 
+							:id='"tab"+index' 
+							@click="changeTab(index)" 
+							:class='tabIndex==index?"text-main font-lg font-weight-bold":""'
+							class='scroll-row-item py-3 px-3'>{{item.classname}}</view>
 			</block>
 		</scroll-view>
 		<!-- 主体内容切换 -->
-		<swiper :duration="150" :style='"height:"+mainHeight+"px;"' @change='onChangeTap' :current='tabIndex'>
+		<swiper :duration="150" 
+						:style='"height:"+mainHeight+"px;"' 
+						@change='onChangeTap' 
+						:current='tabIndex'>
 			<swiper-item v-for='(item,index) in listData' :key='index'>
-				<scroll-view scroll-y @scrolltolower="loadmore(index)" :style='"height:"+mainHeight+"px;"'>
+				<scroll-view scroll-y 
+										@scrolltolower="loadmore(index)" 
+										:style='"height:"+mainHeight+"px;"'>
 					<!-- 列表展示 有数据的情况-->
 					<template v-if='item.list.length>0'>
 						<block v-for='(item2,index2) in item.list' :key='index2'>
 							<!-- 引用公共列表组件 -->
 							<view>
-								<common-list :item='item2' :index='index2' :followStatus='item2.isFollow' @followEvent='followEvent' @doSupport='doSupport'></common-list>
+								<common-list  :item='item2' 
+															:index='index2' 
+															:followStatus='item2.isFollow' 
+															@followEvent='followEvent' 
+															@doSupport='doSupport'></common-list>
 
 								<!-- 分割线组件 -->
 								<divider></divider>
@@ -25,9 +39,9 @@
 						<!-- 上拉加载组件 -->
 						<load-more :loadmore='item.loadmore'></load-more>
 					</template>
-					<template v-else-if='!item.firstLoad'>
-						<view class='text-light-muted flex align-center justify-center font-md' 
-									style='height:200rpx;'>加载中...</view>
+					<!-- 加载中 -->
+					<template v-else-if="!item.firstLoad">
+						<view class="text-light-muted flex align-center justify-center font-md" style="height: 200rpx;">加载中...</view>
 					</template>
 					<!-- 列表展示 无数据的情况 缺省页的展示-->
 					<template v-else>
@@ -146,7 +160,7 @@
 		},
 		//监听导航栏右侧图标按钮
 		onNavigationBarButtonTap() {
-			this.navigateTo({
+			uni.navigateTo({
 				url: '../add-input/add-input'
 			})
 		},
@@ -165,55 +179,61 @@
 
 			//获取数据
 			getData() {
-				//获取分类
-				this.$H.get('/topicclass').then(res => {
-						let [error, result] = res
-						this.tabLi = result.data.data.list
-						// 根据分类生成列表
-						var arr = [];
-						for (var i = 0; i < this.tabLi.length; i++) {
-							//生产列表模板
-							var obj = {
-								//1.上拉加载更多 2.加载中... 3.没有更多了
-								loadmore: "上拉加载更多",
-								list: [],
-								page: 1,
-								firstLoad:false
-							}
-							//把arr想象成listData，把obj里面想象成 list:[]这种结构
-							arr.push(obj)
-						}
-						this.listData = arr
-						//获取第一个分类的数据
-						if (this.tabLi.length) {
-							console.log(this.listData)
-							if(!this.listData[this.tabIndex].firstLoad){
-								this.getList()
-							}
-						}
-					})
-			},
-			//获取指定分类下的数据列表的方法
-			getList() {
+				this.$H.get('/postclass')
+				.then(res=>{
+					 this.tabLi = res.list
+					 
+					// 根据分类生成列表
+					var arr = [];
+					for (var i = 0; i < this.tabLi.length; i++) {
+					 	//生产列表模板
+					 	var obj = {
+					 		//1.上拉加载更多 2.加载中... 3.没有更多了
+					 		loadmore: "上拉加载更多",
+					 		list: [],
+							page:1,
+							firstLoad:false //是否已经加载过
+					 	}
+						//把arr想象成listData，把obj里面想象成 list:[]这种结构
+						arr.push(obj)
+						
+					}//end for
+
+					this.listData = arr
+					//假装请求数据
+					// if(i<3){
+					// 	obj.list = demo 
+					// }
+					//获取第一个分类的数据,如果不判断tabLi的长度，数据为空时会报错
+					if(this.tabLi.length){
+						this.getList()
+					}//end if
+				})//end .then 
+			},//end getdata
+			//获取指定分类下的列表
+			getList(){
 				let index = this.tabIndex
 				let id = this.tabLi[index].id
-				let isrefresh = page === 1
 				let page = this.listData[index].page
-				this.$H.get('/postclass/' + id + '/post/' + page).then(res2 => {
-					let [error2, result2] = res2
-					let list = result2.data.data.list.map(v => {
+				let isrefresh = page === 1
+				//console.log(id,page)
+				this.$H.get('/postclass/'+id+'/post/'+page)
+				.then(res2=>{
+					let list = res2.list.map(v=>{
 						return this.$U.formatCommonList(v)
 					})
-			
-					this.listData[index].list = isrefresh ? list : [...this.listData[index].list, ...list];
-					this.listData[index].loadmore = list.length < 10 ? "没有更多了" : "上拉加载更多";
-					if(isrefresh){
+					//如果不是预览的第一页，对文章列表需要判断是在page为1的初始化情况下 就将page2、3、4....的内容不停的追加到列表中去 
+					this.listData[index].list = isrefresh ? list :[...this.listData[index].list,...list];
+					this.listData[index].loadmore = this.listData[index].list.length<10 ? "没有更多数据了" :"上拉加载更多"
+					
+					//切换tab后，page就会默认等于1，上拉到第二页或者第三页后，数据就已经初始化过了，切换到其他tab,再切换回去后，逻辑是page不该再是默认为1了，就把isrefresh状态改为false了，表示page=2/3/4/5的数据都加载过，就把firstLoad的状态更改点。切换后不会再加载 。此时可用打印result2是否重复打印作为测试标准
+					if(isrefresh){ //page===1
 						this.listData[index].firstLoad = true
 					}
-				})
+				})//end .then
+					
 			},
-			
-			// 把主体内容和tab选项绑定成为一体,监听主体内容的滑块
+			// 监听滑动 , 把主体内容和tab选项绑定成为一体
 			onChangeTap(e) {
 				// 切换到对应的tab上去，直接调用下方的函数
 				this.changeTab(e.detail.current)
@@ -229,7 +249,12 @@
 				this.tabIndex = index
 				// 滚动到指定位置(要和上方的:id的值保持一致)
 				this.scrollInto = 'tab' + index
-				this.getList()
+				
+				
+				//如果数据的加载状态已经不是第一次了，就不会再重新进行加载分下下的数据
+				if(!this.listData[index].firstLoad){
+					this.getList()
+				}
 			},
 
 			// 关注事件
@@ -290,13 +315,14 @@
 
 			//上拉加载更多
 			loadmore(index) {
+				//拿到当前列表
 				let item = this.listData[index] //匹配到当前页面的所有列表
 				if (item.loadmore !== '上拉加载更多') return;
 				//修改当前页面的列表加载状态
 				item.loadmore = '加载中...'
 				//请求数据请求
 				item.page++;
-				this.getList()
+				this.getList();
 			}
 		},
 		computed:{}

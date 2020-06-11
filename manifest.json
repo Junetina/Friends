@@ -75,16 +75,5 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "h5" : {
-        "devServer" : {
-            "proxy" : {
-                "/api/v1" : {
-                    "target" : "http://ceshi2.dishait.cn",
-                    "pathRewrite" : {
-                        "^/api" : ""
-                    }
-                }
-            }
-        }
-    }
+		"h5":{}
 }

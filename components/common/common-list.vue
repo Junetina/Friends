@@ -2,45 +2,43 @@
 	<view class='pt-2 container'>
 		<!-- 用户信息:头像部分|关注部分 -->
 		<view class='flex justify-between mb-2 align-center'>
-			<view class='flex align-center'>
-				<view class="mr-2">						
+			<!-- 头像 -->
+			<view class='flex flex-1 align-center'>
+				<view class="mr-2 flex">						
 					<image 	:src="item.userpic" 
 									@click.stop='infoEvent'
-									class='rounded' 
+									class='rounded align-center' 
 									lazy-load 
 									style='width:66rpx;height:66rpx;'></image>
 				</view>
 				<view>
 					<view class='font text-hover-dark' @click.stop='infoEvent' @click="goDetail">{{item.username}}</view >
-					<view  class='font-small text-light-muted' @click="goDetail" >{{item.newstime}}</view >
+					<view  class='font-small text-light-muted' @click="goDetail" >{{item.newstime | formatTime}}</view >
 				</view>
 			</view>
-			<view>
-								<!-- :class='[isFollow==true?follow:unfollow,]' -->
-				<button class='text-white font-sm animated bg-main' 
-								v-if='!item.isFollow'
-								style='height:50rpx;line-height: 50rpx;'
-								@click="isFollowEvent">
-								<!-- @click="isFollowEvent(item.isFollow) -->
-					{{followText}}
-				</button>
-			</view>
+			<!-- 按钮 -->		 <!-- :class='[isFollow==true?follow:unfollow,]' --> 
+			<button class='text-white font-sm animated bg-main' 
+							v-if='!item.isFollow'
+							style='height:50rpx;line-height: 50rpx;'
+							@click="isFollowEvent">
+							<!-- @click="isFollowEvent(item.isFollow) -->
+				{{followText}}
+			</button>
 		</view>
 		<!-- 发布内容：发布文字 发布图片 -->
-		<view @click="goDetail">
-			<view class='mb-1 text-hover-dark font'
-						>
-						{{item.title}}
-			</view>
-			<slot>
-				<image 	:src='item.titlepic'
-								v-if='item.titlepic' 
-								class='w-100 rounded' 
-								lazy-load
-								style='height:350rpx;'></image>
-			</slot>
-			
-		</view>
+		<!-- 标题 -->
+		<view @click="goDetail" class='mb-1 text-hover-dark font'> {{item.title}} </view>
+		<!-- 帖子详情 -->
+		<slot>
+			<image 	:src='item.titlepic'
+							v-if='item.titlepic' 
+							class='w-100 rounded' 
+							lazy-load
+							@click="goDetail"
+							mode="aspectFill"
+							style='height:350rpx;'>
+			</image>
+		</slot>
 		<!-- 图标栏部分 -->
 		<view class='flex justify-center align-center' style='height:86rpx;'>
 			<!-- 顶 -->
@@ -83,6 +81,7 @@
 </template>
 
 <script>
+	import $T from '@/common/time.js'
 	export default {
 		data(){
 			return{
@@ -90,6 +89,11 @@
 				follow:'follow',
 				followText:"关注",
 				// isFollow:this.followStatus
+			}
+		},
+		filters:{
+			formatTime(value){
+				return $T.gettime(value)
 			}
 		},
 		props: {
@@ -124,8 +128,6 @@
 			
 			//点击评论
 			doComment(){
-				
-				console.log(this.checkAuth)
 				this.checkAuth(()=>{
 					if(!this.isDetail){
 						return this.goDetail()
